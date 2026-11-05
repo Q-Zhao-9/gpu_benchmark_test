@@ -11,6 +11,10 @@ export NCCL_SOCKET_IFNAME="=$NET_IFACE"
 export GLOO_SOCKET_IFNAME="$NET_IFACE"
 export NCCL_SOCKET_FAMILY=AF_INET
 export NCCL_DEBUG="${NCCL_DEBUG:-WARN}"
+export PYTHONUNBUFFERED=1
+export TORCH_CPP_LOG_LEVEL=INFO
+export TORCH_DISTRIBUTED_DEBUG=DETAIL
+export TORCH_LOGS="+distributed,+elastic"
 
 echo "worker=$(hostname) iface=$NET_IFACE node_count=$SLURM_JOB_NUM_NODES" >&2
 
