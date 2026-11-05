@@ -16,6 +16,7 @@ mkdir -p results
 # Examples (replace the path or module with your actual installation):
 # module load pytorch/<version>
 # source /opt/apps/venvs/pytorch/bin/activate
+conda activate myenv_313
 
 python -c 'import torch, torchvision; print("torch",torch.__version__,"torchvision",torchvision.__version__,"CUDA",torch.version.cuda); assert torch.cuda.is_available()'
 
