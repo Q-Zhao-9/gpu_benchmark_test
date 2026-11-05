@@ -28,7 +28,7 @@ exec python -m torch.distributed.run \
   --rdzv-id="$SLURM_JOB_ID" \
   --rdzv-backend=c10d \
   --rdzv-endpoint="$MASTER_ADDR:$MASTER_PORT" \
-  --rdzv-config=host=$IS_HOST \
+  --rdzv-conf=host=$IS_HOST \
   --max-restarts=0 \
   resnet50_ddp_benchmark.py \
   --batch-size="$BENCH_BATCH_SIZE" \
