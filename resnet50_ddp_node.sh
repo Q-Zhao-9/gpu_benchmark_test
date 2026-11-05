@@ -13,6 +13,8 @@ export NCCL_SOCKET_FAMILY=AF_INET
 export NCCL_DEBUG="${NCCL_DEBUG:-WARN}"
 
 echo "worker=$(hostname) iface=$NET_IFACE node_count=$SLURM_JOB_NUM_NODES" >&2
+echo "MASTER_ADDR=$MASTER_ADDR MASTER_PORT=$MASTER_PORT" >&2
+
 exec python -m torch.distributed.run \
   --nnodes="$SLURM_JOB_NUM_NODES" \
   --nproc-per-node=1 \
