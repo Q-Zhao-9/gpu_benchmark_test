@@ -14,7 +14,7 @@ export NCCL_DEBUG="${NCCL_DEBUG:-WARN}"
 export PYTHONUNBUFFERED=1
 export TORCH_CPP_LOG_LEVEL=INFO
 export TORCH_DISTRIBUTED_DEBUG=DETAIL
-export TORCH_LOGS="+distributed,+elastic"
+export TORCH_LOGS="all"
 
 echo "worker=$(hostname) iface=$NET_IFACE node_count=$SLURM_JOB_NUM_NODES" >&2
 
