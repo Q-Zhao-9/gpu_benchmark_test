@@ -2,7 +2,7 @@
 set -euo pipefail
 
 # Every node independently selects the NIC with the cluster-private IPv4 address.
-NET_IFACE=$(ip -o -4 addr show | awk '$4 ~ /^10[.]210[.]45[.]/ {print $2;}'|tail -n 1)
+NET_IFACE=$(ip -o -4 addr show | awk '$4 ~ /^10[.]210[.]45[.]/ {print $2;}'| tail -n 1)
 if [[ -z "$NET_IFACE" ]]; then
   echo "ERROR on $(hostname): no 10.210.45.x interface" >&2
   exit 2

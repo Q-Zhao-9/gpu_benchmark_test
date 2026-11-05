@@ -25,7 +25,7 @@ conda activate myenv_313
 python -c 'import torch, torchvision; print("torch",torch.__version__,"torchvision",torchvision.__version__,"CUDA",torch.version.cuda); assert torch.cuda.is_available()'
 
 # The batch script runs on one allocated compute node. Find its private 10GbE IP.
-MASTER_ADDR=$(ip -o -4 addr show | awk '$4 ~ /^10[.]210[.]45[.]/ {sub(/\/.*/, "", $4); print $4; }' | head -n 1)
+MASTER_ADDR=$(ip -o -4 addr show | awk '$4 ~ /^10[.]210[.]45[.]/ {sub(/\/.*/, "", $4); print $4; }' | tail -n 1)
 if [[ -z "$MASTER_ADDR" ]]; then
   echo 'ERROR: No 10.210.45.x IPv4 address on this node. Check private cluster network.' >&2
   exit 2
