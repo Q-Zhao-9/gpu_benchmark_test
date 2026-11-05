@@ -26,16 +26,29 @@ fi
 
 echo "MASTER_ADDR=$MASTER_ADDR MASTER_PORT=$MASTER_PORT IS_HOST=$IS_HOST SLURM_PROCID=$SLURM_PROCID" >&2
 
-exec python -m torch.distributed.run \
-  --nnodes="$SLURM_JOB_NUM_NODES" \
-  --nproc-per-node=1 \
-  --rdzv-id="$SLURM_JOB_ID" \
-  --rdzv-backend=c10d \
-  --rdzv-endpoint="$MASTER_ADDR:$MASTER_PORT" \
-  --rdzv-conf=host=$IS_HOST \
-  --max-restarts=0 \
-  resnet50_ddp_benchmark.py \
-  --batch-size="$BENCH_BATCH_SIZE" \
-  --warmup="$BENCH_WARMUP" \
-  --steps="$BENCH_STEPS" \
-  --output="results/resnet50-$SLURM_JOB_ID.json"
+# exec python -m torch.distributed.run \
+#   --nnodes="$SLURM_JOB_NUM_NODES" \
+#   --nproc-per-node=1 \
+#   --rdzv-id="$SLURM_JOB_ID" \
+#   --rdzv-backend=c10d \
+#   --rdzv-endpoint="$MASTER_ADDR:$MASTER_PORT" \
+#   --rdzv-conf=host=$IS_HOST \
+#   --max-restarts=0 \
+#   resnet50_ddp_benchmark.py \
+#   --batch-size="$BENCH_BATCH_SIZE" \
+#   --warmup="$BENCH_WARMUP" \
+#   --steps="$BENCH_STEPS" \
+#   --output="results/resnet50-$SLURM_JOB_ID.json"
+
+python -u -m torch.distributed.run \
+    --nnodes="$SLURM_JOB_NUM_NODES" \
+    --nproc-per-node=1 \
+    --rdzv-backend=static \
+    --node-rank="$SLURM_PROCID" \
+    --master-addr="$MASTER_ADDR" \
+    --master-port="$MASTER_PORT" \
+    --max-restarts=0 \
+    resnet50_ddp_benchmark.py \
+    --batch-size="$BENCH_BATCH_SIZE" \
+    --warmup="$BENCH_WARMUP" \
+    --steps="$BENCH_STEPS"
