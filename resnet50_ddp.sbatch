@@ -7,6 +7,8 @@
 #SBATCH --mem=16G
 #SBATCH --time=00:30:00
 #SBATCH --output=resnet50-ddp-%j.log
+#SBATCH --account=research
+#SBATCH --partition=gpu_dedicated
 
 set -euo pipefail
 cd "$SLURM_SUBMIT_DIR"
