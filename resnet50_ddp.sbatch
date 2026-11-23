@@ -40,6 +40,10 @@ export BENCH_BATCH_SIZE="${BENCH_BATCH_SIZE:-32}"
 export BENCH_STEPS="${BENCH_STEPS:-200}"
 export BENCH_WARMUP="${BENCH_WARMUP:-20}"
 
+export NCCL_SOCKET_IFNAME="=enp198s0f0np0"
+export NCCL_SOCKET_FAMILY=AF_INET
+export NCCL_DEBUG=WARN
+
 echo "job=$SLURM_JOB_ID nodes=$SLURM_JOB_NUM_NODES master=$MASTER_ADDR:$MASTER_PORT"
 echo "batch/gpu=$BENCH_BATCH_SIZE warmup=$BENCH_WARMUP steps=$BENCH_STEPS"
 srun --ntasks="$SLURM_JOB_NUM_NODES" --ntasks-per-node=1 --kill-on-bad-exit=1 \
