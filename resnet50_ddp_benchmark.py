@@ -25,7 +25,13 @@ def parse_args():
     "--no-sync",
     action="store_true",
     help="Disable DDP gradient synchronization for diagnostics"
-)
+   )
+    parser.add_argument(
+    "--comm-dtype",
+    choices=["fp32", "bf16"],
+    default="fp32",
+    help="DDP gradient communication precision"
+   )
     args = parser.parse_args()
     if args.batch_size < 1 or args.warmup < 1 or args.steps < 1:
         parser.error("batch-size, warmup, and steps must be positive")
@@ -50,6 +56,15 @@ def main():
 
         model = resnet50(weights=None).to(device).train()
         ddp = DDP(model, device_ids=[local_rank], output_device=local_rank)
+        if args.comm_dtype == "bf16":
+            from torch.distributed.algorithms.ddp_comm_hooks \
+                import default_hooks
+
+            ddp.register_comm_hook(
+                state=None,
+                hook=default_hooks.bf16_compress_hook
+            )
+
         optimizer = torch.optim.SGD(ddp.parameters(), lr=0.01)
 
         # Generate data on-device and reuse it: no dataset download, NFS, or data-loader noise.
@@ -159,12 +174,13 @@ def main():
                 "precision": "bfloat16 autocast",
                 "data": "synthetic resident on GPU",
                 "gradient_sync": not args.no_sync,
+                "communication_dtype": args.comm_dtype
             }
             print("BENCH_RESULT=" + json.dumps(result, sort_keys=True), flush=True)
             if args.output:
                 args.output.parent.mkdir(parents=True, exist_ok=True)
                 args.output.write_text(json.dumps(result, indent=2) + "\n", encoding="utf-8")
-                
+
         if rank == 0 and not args.no_sync:
             import pprint
 

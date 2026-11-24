@@ -53,3 +53,5 @@ python -u -m torch.distributed.run \
     --warmup="$BENCH_WARMUP" \
     --steps="$BENCH_STEPS" \
     #--no-sync
+    --comm-dtype="$COMM_DTYPE" \
+    
