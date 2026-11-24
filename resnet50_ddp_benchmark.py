@@ -164,6 +164,28 @@ def main():
             if args.output:
                 args.output.parent.mkdir(parents=True, exist_ok=True)
                 args.output.write_text(json.dumps(result, indent=2) + "\n", encoding="utf-8")
+                
+        if rank == 0 and not args.no_sync:
+            import pprint
+
+            print("========== DDP Diagnostics ==========")
+
+            ddp_stats = ddp._get_ddp_logging_data()
+            pprint.pprint(ddp_stats)
+
+            timing_keys = [
+                "avg_forward_compute_time",
+                "avg_backward_compute_time",
+                "avg_backward_comm_time",
+                "avg_backward_compute_comm_overlap_time",
+            ]
+
+            for key in timing_keys:
+                if key in ddp_stats:
+                    print(f"{key}: {ddp_stats[key] / 1e6:.3f} ms")
+
+            print("=====================================")
+
     finally:
         dist.destroy_process_group()
 
