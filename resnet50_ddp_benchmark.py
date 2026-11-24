@@ -7,7 +7,7 @@ import socket
 import time
 from datetime import timedelta
 from pathlib import Path
-
+from contextlib import nullcontext
 import torch
 import torch.distributed as dist
 import torch.nn.functional as F
@@ -21,6 +21,11 @@ def parse_args():
     parser.add_argument("--warmup", type=int, default=20, help="Warmup training steps")
     parser.add_argument("--steps", type=int, default=200, help="Measured training steps")
     parser.add_argument("--output", type=Path, default=None, help="JSON result path (rank 0 only)")
+    parser.add_argument(
+    "--no-sync",
+    action="store_true",
+    help="Disable DDP gradient synchronization for diagnostics"
+)
     args = parser.parse_args()
     if args.batch_size < 1 or args.warmup < 1 or args.steps < 1:
         parser.error("batch-size, warmup, and steps must be positive")
@@ -62,10 +67,23 @@ def main():
 
         def training_step():
             optimizer.zero_grad(set_to_none=True)
-            with torch.autocast(device_type="cuda", dtype=torch.bfloat16):
-                logits = ddp(images)
-                loss = F.cross_entropy(logits, targets)
-            loss.backward()  # DDP uses NCCL to synchronize gradients among all ranks.
+
+            sync_context = (
+                ddp.no_sync()
+                if args.no_sync
+                else nullcontext()
+            )
+
+            with sync_context:
+                with torch.autocast(
+                    device_type="cuda",
+                    dtype=torch.bfloat16
+                ):
+                    logits = ddp(images)
+                    loss = F.cross_entropy(logits, targets)
+
+                loss.backward()
+
             optimizer.step()
             return loss
 
@@ -73,6 +91,31 @@ def main():
             loss = training_step()
         
         print(f"rank={rank} warmup last_loss={loss.detach().float().item():.5f}", flush=True)
+
+        if rank == 0:
+            from collections import Counter
+
+            param_count = sum(
+                p.numel() for p in model.parameters()
+            )
+
+            grad_bytes = sum(
+                p.grad.numel() * p.grad.element_size()
+                for p in model.parameters()
+                if p.grad is not None
+            )
+
+            grad_dtypes = Counter(
+                str(p.grad.dtype)
+                for p in model.parameters()
+                if p.grad is not None
+            )
+
+            print("Parameter count:", param_count)
+            print("Gradient bytes:", grad_bytes)
+            print("Gradient size (MiB):", grad_bytes / 1024**2)
+            print("Gradient dtypes:", grad_dtypes)
+            print("NCCL version:", torch.cuda.nccl.version())
 
         torch.cuda.synchronize()
         dist.barrier()
@@ -115,6 +158,7 @@ def main():
                 "cuda_runtime": torch.version.cuda,
                 "precision": "bfloat16 autocast",
                 "data": "synthetic resident on GPU",
+                "gradient_sync": not args.no_sync,
             }
             print("BENCH_RESULT=" + json.dumps(result, sort_keys=True), flush=True)
             if args.output:
