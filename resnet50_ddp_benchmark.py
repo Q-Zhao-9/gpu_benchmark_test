@@ -80,8 +80,8 @@ def main():
         start = time.perf_counter()
         for _ in range(args.steps):
             loss = training_step()
-            if _ % 10 == 0 and rank == 0:
-                print(f"step={_} last_loss={loss.detach().float().item():.5f}", flush=True)
+            # if _ % 10 == 0 and rank == 0:
+            #     print(f"step={_} last_loss={loss.detach().float().item():.5f}", flush=True)
         torch.cuda.synchronize()
         elapsed = time.perf_counter() - start
 
